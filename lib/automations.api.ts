@@ -1,9 +1,5 @@
-import {
-  AutomationOverview,
-  AlertAutomationRuleListItem,
-  AutomationPreviewResult,
-} from "./automations.types";
-
+import {  AutomationOverview,  AlertAutomationRuleListItem,  AutomationPreviewResult,} from "./automations.types";
+import { RunAutomationsResponse } from "./automations.types";
 // 🔎 Overview geral (health + métricas)
 export async function fetchAutomationOverview(): Promise<AutomationOverview> {
   const res = await fetch("/api/automations/overview", {

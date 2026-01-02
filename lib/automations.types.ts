@@ -1,4 +1,5 @@
-export type UiHealth = "ok" | "warning" | "critical";
+export type UiHealth = "ok" | "warning" | "blocked";
+
 
 export interface AutomationOverview {
   uiHealth: UiHealth;
@@ -15,7 +16,7 @@ export interface AutomationOverview {
   lastExecution: {
     id: number;
     ruleId: number;
-    status: string;
+    status: "success" | "failed" | "skipped";
     executedAt: string;
     affectedCount: number;
     durationMs: number | null;
@@ -51,3 +52,15 @@ export interface AutomationPreviewResult {
     type: string;
   }>;
 }
+
+export type RunAutomationsResponse = {
+  executed: number;
+  results: Array<{
+    ruleId: number | null;
+    preset: string | null;
+    action: string | null;
+    status: "executed" | "skipped" | "error" | "limited";
+    affected: number;
+    error: string | null;
+  }>;
+};
