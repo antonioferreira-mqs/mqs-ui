@@ -1,22 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./dashboard.module.css";
 
 import { fetchAlertsDashboard } from "@/lib/api";
 import { fetchAutomationOverview } from "@/lib/automations.api";
+import { logout } from "@/lib/auth";
 
 import { HealthCard } from "@/components/dashboard/HealthCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { AutomationHealthCard } from "@/components/dashboard/AutomationHealthCard";
 import { AutomationRunPanel } from "@/components/dashboard/AutomationRunPanel";
+import { AutomationExecutionsList } from "@/components/dashboard/AutomationExecutionsList";
 
 import { AlertsDashboardResponse } from "@/lib/types";
 import { AutomationOverview } from "@/lib/automations.types";
 
+import { AlertsList } from "@/components/alerts/AlertsList";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 
 function DashboardContent() {
+  const router = useRouter();
+
   const [data, setData] = useState<AlertsDashboardResponse | null>(null);
   const [automation, setAutomation] =
     useState<AutomationOverview | null>(null);
@@ -40,6 +46,11 @@ function DashboardContent() {
     loadAutomation();
   }, [loadAutomation]);
 
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
+
   if (error) {
     return <p className={styles.empty}>{error}</p>;
   }
@@ -55,6 +66,10 @@ function DashboardContent() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1>Dashboard</h1>
+
+        <button onClick={handleLogout}>
+          Logout
+        </button>
       </header>
 
       {/* 🤖 Estado das automações */}
@@ -64,7 +79,10 @@ function DashboardContent() {
             data={automation}
             onRefresh={loadAutomation}
           />
+
           <AutomationRunPanel onAfterRun={loadAutomation} />
+
+          <AutomationExecutionsList />
         </section>
       )}
 
@@ -94,6 +112,11 @@ function DashboardContent() {
           </div>
         </section>
       )}
+
+      {/* 🚨 Lista de alertas */}
+      <section className={styles.grid}>
+        <AlertsList />
+      </section>
     </main>
   );
 }

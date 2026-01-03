@@ -64,3 +64,19 @@ export type RunAutomationsResponse = {
     error: string | null;
   }>;
 };
+
+// === Automation Executions Ledger ===
+export interface AutomationExecution {
+  id: number;
+  ruleId: number;
+  status: "success" | "failed" | "skipped";
+  executedAt: string;
+  affectedCount: number;
+  durationMs: number | null;
+  error: string | null;
+}
+
+export type LatestAutomationExecutionsResponse = {
+  status: "ok";
+  data: AutomationExecution[];
+};

@@ -1,8 +1,9 @@
+// mqs-ui/app/api/alerts/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   try {
-    // cookie auth_token (igual ao middleware)
+    // cookie auth_token (mesmo padrão de automations)
     const cookieHeader = req.headers.get("cookie") || "";
     const tokenMatch = cookieHeader.match(/(?:^|;\s*)auth_token=([^;]+)/);
     const token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
@@ -14,19 +15,15 @@ export async function GET(req: Request) {
       );
     }
 
-    // workspaceId: tenta header (se já usares) e fallback para 1
     const workspaceId =
       req.headers.get("x-workspace-id") ||
       (process.env.DEFAULT_WORKSPACE_ID ?? "1");
 
-    // ⚠️ BFF corre em 3001 (não 3000)
     const upstreamBase =
       process.env.BFF_BASE_URL || "http://localhost:3001";
 
-    const url = new URL("/api/automations/overview", upstreamBase);
-
-    // passthrough de query params (ex: ?windowMinutes=120)
     const reqUrl = new URL(req.url);
+    const url = new URL("/api/alerts", upstreamBase);
     reqUrl.searchParams.forEach((v, k) => url.searchParams.set(k, v));
 
     const upstreamRes = await fetch(url.toString(), {

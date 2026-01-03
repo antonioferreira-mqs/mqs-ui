@@ -1,4 +1,4 @@
-// app/api/alerts/automations/route.ts
+// mqs-ui/app/api/automations/executions/latest/route.ts
 import { NextResponse } from "next/server";
 
 const BFF =
@@ -6,6 +6,10 @@ const BFF =
 const DEFAULT_WORKSPACE_ID =
   process.env.DEFAULT_WORKSPACE_ID || "1";
 
+/**
+ * GET /api/automations/executions/latest
+ * Proxy Next → BFF
+ */
 export async function GET(req: Request) {
   try {
     // 🔐 Extrair auth_token do cookie (padrão do projeto)
@@ -22,18 +26,25 @@ export async function GET(req: Request) {
 
     const workspaceId = DEFAULT_WORKSPACE_ID;
 
-    const upstream = await fetch(
-      `${BFF}/api/alerts/automations`,
-      {
-        method: "GET",
-        headers: {
-          authorization: `Bearer ${token}`,
-          "x-workspace-id": workspaceId,
-          accept: "application/json",
-        },
-        cache: "no-store",
-      }
+    // 🔁 Passar query params (ex: ?limit=10)
+    const reqUrl = new URL(req.url);
+    const url = new URL(
+      "/api/automations/executions/latest",
+      BFF
     );
+    reqUrl.searchParams.forEach((v, k) =>
+      url.searchParams.set(k, v)
+    );
+
+    const upstream = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "x-workspace-id": workspaceId,
+        accept: "application/json",
+      },
+      cache: "no-store",
+    });
 
     const text = await upstream.text();
 

@@ -20,6 +20,14 @@ type Props = {
   onAfterRun?: () => void; // refresh overview / health
 };
 
+type AuthMeResponse = {
+  role: string;
+  partnerLevel?: {
+    key: string;
+    name: string;
+  };
+};
+
 export function AutomationRunPanel({ onAfterRun }: Props) {
   const [rules, setRules] = useState<AlertAutomationRuleListItem[]>([]);
   const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null);
@@ -32,6 +40,27 @@ export function AutomationRunPanel({ onAfterRun }: Props) {
 
   // 🆕 confirmação
   const [confirming, setConfirming] = useState(false);
+
+  // 🔐 user (RBAC simples – P9)
+  const [user, setUser] = useState<AuthMeResponse | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
+
+  /**
+   * 🔐 UX guard (P9)
+   * Backend ainda não expõe permissões granulares.
+   * Por agora, apenas ADMIN pode executar automações.
+   *
+   * TODO (P10): substituir por permissões quando o backend expuser `permissions[]`
+   */
+  const canRunAutomation = useMemo(() => {
+    return user?.partnerLevel?.key === "ADMIN";
+  }, [user]);
 
   const selectedRule = useMemo(
     () => rules.find((r) => r.id === selectedRuleId) ?? null,
@@ -87,7 +116,7 @@ export function AutomationRunPanel({ onAfterRun }: Props) {
    * Apenas abre o modal
    */
   function handleRun() {
-    if (!selectedRule) return;
+    if (!selectedRule || !canRunAutomation) return;
     setConfirming(true);
   }
 
@@ -180,9 +209,16 @@ export function AutomationRunPanel({ onAfterRun }: Props) {
           <button
             className={styles.primary}
             onClick={handleRun}
-            disabled={!selectedRule || running || !selectedRule.enabled}
+            disabled={
+              !selectedRule ||
+              running ||
+              !selectedRule.enabled ||
+              !canRunAutomation
+            }
             title={
-              !selectedRule?.enabled
+              !canRunAutomation
+                ? "Sem permissões para executar automações"
+                : !selectedRule?.enabled
                 ? "Regra está desativada"
                 : "Executar regra"
             }

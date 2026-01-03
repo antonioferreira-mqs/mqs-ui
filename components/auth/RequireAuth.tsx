@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getMe } from "@/lib/user";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,15 +17,19 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
         const user = await getMe();
 
         if (!user) {
-          router.replace("/login");
+          router.replace(
+            `/login?next=${encodeURIComponent(pathname)}`
+          );
           return;
         }
 
         if (mounted) {
           setLoading(false);
         }
-      } catch (err) {
-        router.replace("/login");
+      } catch {
+        router.replace(
+          `/login?next=${encodeURIComponent(pathname)}`
+        );
       }
     }
 
@@ -33,7 +38,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, pathname]);
 
   if (loading) {
     return <p>A verificar sessão…</p>;

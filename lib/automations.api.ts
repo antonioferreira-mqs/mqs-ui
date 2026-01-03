@@ -1,5 +1,5 @@
-import {  AutomationOverview,  AlertAutomationRuleListItem,  AutomationPreviewResult,} from "./automations.types";
-import { RunAutomationsResponse } from "./automations.types";
+import type {  AutomationOverview,  AlertAutomationRuleListItem,  AutomationPreviewResult,  RunAutomationsResponse,  LatestAutomationExecutionsResponse,  AutomationExecution,} from "./automations.types";
+
 // 🔎 Overview geral (health + métricas)
 export async function fetchAutomationOverview(): Promise<AutomationOverview> {
   const res = await fetch("/api/automations/overview", {
@@ -16,7 +16,7 @@ export async function fetchAutomationOverview(): Promise<AutomationOverview> {
 }
 
 // ▶️ Executar todas as automações (runner global)
-export async function runAutomationsNow() {
+export async function runAutomationsNow(): Promise<RunAutomationsResponse> {
   const res = await fetch("/api/alerts/automations/run", {
     method: "POST",
     credentials: "include",
@@ -24,6 +24,25 @@ export async function runAutomationsNow() {
 
   if (!res.ok) {
     throw new Error("Falha ao executar automações");
+  }
+
+  const json = await res.json();
+  return json.data;
+}
+
+// ▶️ Executar uma regra específica
+export async function runAutomationRule(
+  ruleId: number
+): Promise<RunAutomationsResponse> {
+  const res = await fetch("/api/alerts/automations/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ ruleId }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Falha ao executar regra");
   }
 
   const json = await res.json();
@@ -68,19 +87,22 @@ export async function previewAutomationRule(payload: {
   return json.data;
 }
 
-// ▶️ Executar uma regra específica
-export async function runAutomationRule(ruleId: number) {
-  const res = await fetch("/api/alerts/automations/run", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ ruleId }),
-  });
+// 🕒 Últimas execuções (ledger)
+export async function fetchLatestAutomationExecutions(
+  limit: number = 10
+): Promise<AutomationExecution[]> {
+  const res = await fetch(
+    `/api/automations/executions/latest?limit=${limit}`,
+    {
+      credentials: "include",
+      cache: "no-store",
+    }
+  );
 
   if (!res.ok) {
-    throw new Error("Falha ao executar regra");
+    throw new Error("Falha ao carregar execuções recentes");
   }
 
-  const json = await res.json();
+  const json: LatestAutomationExecutionsResponse = await res.json();
   return json.data;
 }
